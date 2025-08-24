@@ -8,6 +8,7 @@
   const payloadEl = document.getElementById('payload');
   const encodingEl = document.getElementById('encoding');
   const pubResultEl = document.getElementById('pub-result');
+  const clearBtn = document.getElementById('clear');
 
   let total = 0;
   let dropped = 0;
@@ -37,9 +38,9 @@
         const pre = document.createElement('pre');
         pre.textContent = JSON.stringify(data, null, 2);
         pre.className = `kind-${data.kind || 'unknown'}`;
-        eventsEl.appendChild(pre);
+        eventsEl.insertBefore(pre, eventsEl.firstChild);
         while (eventsEl.childNodes.length > 1000) {
-          eventsEl.removeChild(eventsEl.firstChild);
+          eventsEl.removeChild(eventsEl.lastChild);
         }
       } catch (e) {
         console.error('bad event', e);
@@ -85,6 +86,10 @@
     } else {
       pubResultEl.textContent = 'Control socket not connected';
     }
+  });
+
+  clearBtn.addEventListener('click', function () {
+    eventsEl.innerHTML = '';
   });
 
   connect();
