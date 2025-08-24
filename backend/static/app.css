@@ -1,0 +1,66 @@
+:root {
+  color-scheme: light dark;
+  --bg: #111;
+  --fg: #eee;
+  --muted: #888;
+  --accent: #4caf50;
+  --warn: #ff9800;
+}
+
+body {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  margin: 0;
+  padding: 0 1rem 2rem;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+header {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  border-bottom: 1px solid #333;
+  margin-bottom: 1rem;
+}
+
+h1 {
+  font-size: 1.2rem;
+}
+
+#status {
+  color: var(--muted);
+}
+
+#counters {
+  margin-left: auto;
+  color: var(--muted);
+}
+
+#publish {
+  margin-bottom: 1rem;
+}
+
+#events {
+  display: grid;
+  gap: 4px;
+}
+
+pre {
+  margin: 0;
+  padding: 6px;
+  background: #222;
+  border-radius: 4px;
+  overflow: auto;
+  font-size: 12px;
+}
+
+pre.kind-monitor {
+  border-left: 4px solid var(--warn);
+}
+pre.kind-bus {
+  border-left: 4px solid var(--accent);
+}
+
+label {
+  margin-right: 0.5rem;
+}

@@ -1,7 +1,14 @@
 [project]
 name = "zmqhub"
 version = "0.1.0"
-description = "Add your description here"
+description = "ZeroMQ hub with browser UI (FastAPI backend + WebSockets + JS frontend)"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "pyzmq>=26.0.0",
+    "pydantic>=2.7.0",
+    "pydantic-settings>=2.2.1",
+    "aiofiles>=23.2.1"
+]

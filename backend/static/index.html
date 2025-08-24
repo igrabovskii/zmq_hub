@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>ZMQ Hub</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <header>
+    <h1>ZMQ Hub</h1>
+    <div id="status">Connecting…</div>
+    <div id="counters">
+      <span id="count-total">0</span> events
+      <span id="count-dropped">0</span> dropped
+    </div>
+  </header>
+
+  <section id="publish">
+    <h2>Publish</h2>
+    <form id="pub-form">
+      <label>Topic <input id="topic" type="text" required placeholder="foo/bar"></label>
+      <label>Payload <input id="payload" type="text" placeholder="hello"></label>
+      <label>Encoding
+        <select id="encoding">
+          <option value="utf8" selected>utf8</option>
+          <option value="base64">base64</option>
+        </select>
+      </label>
+      <button type="submit">Send</button>
+    </form>
+    <div id="pub-result"></div>
+  </section>
+
+  <section id="stream">
+    <h2>Stream</h2>
+    <div id="events"></div>
+  </section>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
