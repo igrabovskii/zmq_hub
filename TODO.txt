@@ -4,7 +4,7 @@ Scope / Goals
 - Provide a ZeroMQ hub that:
   - [ ] Runs an XPUB/XSUB proxy to bridge external publishers and subscribers.
   - [ ] Captures and streams all ZeroMQ socket monitor events (connect, disconnect, accept, bind, retries, errors).
-  - [ ] Optionally captures and streams all messages passing through the proxy (topics + payloads).
+  - [ ]  captures and streams all messages passing through the proxy (topics + payloads).
   - [ ] Exposes a WebSocket API to push events/messages to the browser in real time.
   - [ ] Allows the browser to publish messages onto the bus (topic + payload; support text/bytes/multipart).
   - [ ] Is configurable (ports, addresses, security), observable (logging/metrics), and testable.
