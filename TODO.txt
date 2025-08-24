@@ -1,0 +1,183 @@
+TODO: ZeroMQ Hub with Browser UI (Python backend + WebSockets + JS frontend)
+
+Scope / Goals
+- Provide a ZeroMQ hub that:
+  - [ ] Runs an XPUB/XSUB proxy to bridge external publishers and subscribers.
+  - [ ] Captures and streams all ZeroMQ socket monitor events (connect, disconnect, accept, bind, retries, errors).
+  - [ ] Optionally captures and streams all messages passing through the proxy (topics + payloads).
+  - [ ] Exposes a WebSocket API to push events/messages to the browser in real time.
+  - [ ] Allows the browser to publish messages onto the bus (topic + payload; support text/bytes/multipart).
+  - [ ] Is configurable (ports, addresses, security), observable (logging/metrics), and testable.
+
+High-Level Architecture
+- Backend (Python)
+  - [ ] FastAPI (or Starlette) HTTP server to serve static UI and host WebSocket endpoints.
+  - [ ] pyzmq-based XPUB/XSUB proxy (steerable/capture where useful).
+  - [ ] ZMQ monitor sockets for both XPUB and XSUB to emit ZMQ events.
+  - [ ] Unified event bus in-process to fan-out data to WebSocket clients.
+  - [ ] Injection path to publish messages coming from the browser back into the hub (via PUB -> XSUB or inproc queue fed into custom proxy loop).
+- Frontend (JS)
+  - [ ] Minimal single-page UI (index.html + app.js + styles.css).
+  - [ ] WebSocket client to receive server-pushed events/messages and display in real time.
+  - [ ] Controls to publish messages (topic, payload, encoding, multipart).
+  - [ ] Filters (by topic, event type, payload text) and pause/resume stream.
+
+Proposed Endpoints / Interfaces
+- HTTP
+  - [ ] GET /               -> serve UI (index.html)
+  - [ ] GET /static/*       -> serve static assets
+  - [ ] GET /healthz        -> health check
+- WebSocket
+  - [ ] /ws/events          -> server -> client stream of:
+        { "ts": iso8601, "kind": "monitor|bus", "source": "xsub|xpub|capture", "topic": "str|base64", "payload": "str|base64|[...parts]", "meta": {...} }
+  - [ ] /ws/control         -> client -> server commands:
+        {"action":"publish","topic":"...","payload":"...","encoding":"utf8|base64","multipart":["..."] }
+        {"action":"subscribe","topics":["..."]}  (client-side filter hint)
+        {"action":"set_filter","include":["..."],"exclude":["..."],"kinds":["monitor","bus"]}
+        {"action":"ping"} -> {"action":"pong"}
+
+Configuration (defaults)
+- [ ] XSUB bind: tcp://0.0.0.0:5551   (publishers connect here)
+- [ ] XPUB bind: tcp://0.0.0.0:5552   (subscribers connect here)
+- [ ] HTTP/WS:   0.0.0.0:8080
+- [ ] CORS/Origin allowlist
+- [ ] Max message size, rate limits, backpressure thresholds
+
+Directory Structure
+- [ ] backend/
+      - app.py                (FastAPI app, routes, WS handlers)
+      - hub.py                (lifecycle, start/stop, threads/tasks)
+      - zmq_proxy.py          (XSUB/XPUB proxy with capture + optional custom poller)
+      - zmq_monitor.py        (monitor socket setup + event parsing -> normalized JSON)
+      - events.py             (in-process pub/sub or Queue + fanout to WS clients)
+      - publisher.py          (injection socket for UI-originated publish)
+      - config.py             (pydantic Settings/env parsing)
+      - logging_config.py
+      - static/
+        - index.html
+        - app.js
+        - app.css
+- [ ] examples/
+      - pub.py                (sample producer)
+      - sub.py                (sample consumer)
+- [ ] tests/
+      - test_proxy.py
+      - test_monitor.py
+      - test_ws_end_to_end.py
+- [ ] requirements.txt / pyproject.toml
+- [ ] README.md
+
+Backend Tasks
+- Bootstrapping
+  - [ ] Choose framework: FastAPI + uvicorn[standard].
+  - [ ] Add dependencies: pyzmq, fastapi, uvicorn, pydantic, typing-extensions (if needed).
+  - [ ] Implement Settings (env, .env support) for ports/addresses/security.
+  - [ ] Structured logging (JSON or human) with log levels via env.
+
+- ZMQ Proxy
+  - [ ] Implement XPUB/XSUB proxy.
+  - [ ] Decide capture approach:
+        - EITHER use zmq.proxy_steerable(frontend, backend, capture) to mirror all frames to capture socket.
+        - OR custom proxy loop with zmq.Poller to merge capture and injection channels.
+  - [ ] Normalize captured frames into events: topic (bytes), payload(s), size, direction.
+  - [ ] Backpressure: bounded queues between capture and WS broadcast; drop oldest with counter when overflow.
+
+- ZMQ Monitor Events
+  - [ ] Enable monitor on both sockets (EVENT_ALL).
+  - [ ] Parse events (addr, errno, value) into human-friendly JSON.
+  - [ ] Surface monitor events via the same WS stream (kind="monitor").
+
+- Message Injection (from UI)
+  - [ ] Implement a PUB socket that connects to the hub’s XSUB bind to publish UI-originated messages.
+  - [ ] Validate/convert UI payload:
+        - utf-8 text, raw base64, or multipart base64 array.
+  - [ ] Confirm topic prefixing/format; document that subscribers must subscribe accordingly.
+  - [ ] Optional: server-side ACLs restricting allowed topics.
+
+- WebSocket Layer
+  - [ ] WS endpoint for events: subscribe client and stream buffered events with heartbeats.
+  - [ ] WS control endpoint: handle commands (publish, set_filter, subscribe).
+  - [ ] Client-specific filters applied server-side (avoid sending irrelevant messages).
+  - [ ] Heartbeats (ping/pong), idle timeout, disconnect handling.
+  - [ ] Rate limiting per client (messages/sec) with drop counters.
+
+- Observability / Ops
+  - [ ] /healthz endpoint checks:
+        - process up, sockets bound, monitor active.
+  - [ ] Metrics:
+        - msgs_in, msgs_out, dropped_ws, dropped_queue, clients_connected, publish_requests.
+  - [ ] Graceful shutdown: close WS clients, stop proxy, close sockets.
+
+- Security
+  - [ ] CORS/Origin allowlist.
+  - [ ] Optional API key or token for WS control.
+  - [ ] Input validation and size limits (topic length, payload bytes).
+  - [ ] Sanitize logs to avoid dumping raw payloads in production.
+
+Frontend Tasks
+- [ ] Build index.html with:
+      - header with connection status, counters (msg/s), pause/resume.
+      - filter controls: topic include/exclude, kinds, text search.
+      - stream view: virtualized list with autoscroll; color by event kind.
+      - publish form: topic, payload, encoding (utf8/base64), multipart toggle.
+      - toast/error display.
+- [ ] app.js:
+      - WebSocket connect/reconnect with exponential backoff.
+      - JSON encode/decode helpers (base64 utils).
+      - Apply client-side filters; send set_filter to server.
+      - Render stream efficiently (batch DOM updates / requestAnimationFrame).
+- [ ] app.css:
+      - Minimal, responsive layout; dark/light theme.
+
+Examples / Developer Experience
+- [ ] Example publisher/subscriber scripts to verify hub.
+- [ ] Makefile or simple scripts for:
+      - run backend
+      - run example pub/sub
+      - run tests
+- [ ] Dockerfile and docker-compose for hub + example clients.
+
+Testing
+- Unit
+  - [ ] Event normalization (monitor and capture parsing).
+  - [ ] Validation of publish commands (encodings, multipart).
+- Integration
+  - [ ] Launch hub, attach example pub/sub, assert message path.
+  - [ ] WS client receives monitor and bus events.
+  - [ ] Backpressure: simulate fast producer, ensure drops counted.
+- E2E
+  - [ ] Browser automation (Playwright) optional: UI displays live data and can publish.
+
+Documentation
+- [ ] README with:
+      - What is the hub, when to use it.
+      - Ports and endpoints, message formats.
+      - Quickstart (pip install / docker), examples.
+      - Security considerations and limits.
+- [ ] Architecture diagram and data flow.
+- [ ] Troubleshooting (common ZMQ issues, firewall, HWM tuning).
+
+Performance / Tuning (Post-MVP)
+- [ ] HWM settings for XPUB/XSUB, capture sockets, and PUB injection.
+- [ ] Batch send to WS clients; coalesce frames.
+- [ ] Optional sampling of high-rate streams to protect UI.
+
+Acceptance Criteria (MVP)
+- [ ] External PUB can connect to XSUB and external SUB can connect to XPUB and exchange messages.
+- [ ] Browser connects via WS and sees:
+      - ZMQ monitor events (connect/disconnect) as they happen.
+      - Bus messages (topic + payload) in real time.
+- [ ] From the browser, user can publish a message on a given topic that reaches external SUBs.
+- [ ] Hub can run for 1 hour under moderate load without memory growth or client disconnects.
+
+Nice-to-haves (Later)
+- [ ] TLS for HTTP/WS; CURVE for ZMQ.
+- [ ] Multiple hubs; bridge mode; topic-based routing with ACLs.
+- [ ] Persistence and replay buffer (bounded, on-disk).
+- [ ] Export events to files or external sinks (Kafka/S3).
+- [ ] UI: downloadable pcap-like logs; custom color rules.
+
+Open Questions
+- [ ] Should UI-originated messages be flagged/tagged differently?
+- [ ] Do we need per-tenant topic namespaces or ACLs?
+- [ ] Max payload sizes and multipart limits?
