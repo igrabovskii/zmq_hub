@@ -2,6 +2,8 @@
 
 ZeroMQ hub with a browser UI. It runs an XSUB/XPUB proxy, captures monitor events and bus messages, and streams them to the browser over WebSockets. The UI can also publish messages back onto the bus.
 
+![Screenshot](screenshot.png)
+
 ## Features (MVP)
 - XSUB bind (publishers connect) and XPUB bind (subscribers connect).
 - Monitor events streamed live to the browser.
