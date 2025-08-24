@@ -41,24 +41,31 @@ h1 {
 }
 
 #events {
-  display: grid;
-  gap: 4px;
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
 }
 
-pre {
-  margin: 0;
+#events th, #events td {
   padding: 6px;
-  background: #222;
-  border-radius: 4px;
-  overflow: auto;
+  border-bottom: 1px solid #333;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
   font-size: 12px;
 }
-
-pre.kind-monitor {
-  border-left: 4px solid var(--warn);
+#events th {
+  text-align: left;
+  color: var(--muted);
 }
-pre.kind-bus {
+
+.kind-monitor td {
+  border-left: 4px solid var(--warn);
+  padding-left: 2px;
+}
+.kind-bus td {
   border-left: 4px solid var(--accent);
+  padding-left: 2px;
 }
 
 label {

@@ -35,7 +35,18 @@
 
   <section id="stream">
     <h2>Stream</h2>
-    <div id="events"></div>
+    <table id="events">
+      <thead>
+        <tr>
+          <th>ts</th>
+          <th>kind</th>
+          <th>source</th>
+          <th>topic</th>
+          <th>payload</th>
+        </tr>
+      </thead>
+      <tbody id="events-body"></tbody>
+    </table>
   </section>
 
   <script src="/static/app.js"></script>

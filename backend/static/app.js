@@ -1,6 +1,6 @@
 (function () {
   const statusEl = document.getElementById('status');
-  const eventsEl = document.getElementById('events');
+  const eventsBody = document.getElementById('events-body');
   const countTotalEl = document.getElementById('count-total');
   const countDroppedEl = document.getElementById('count-dropped');
   const pubForm = document.getElementById('pub-form');
@@ -35,12 +35,31 @@
         const data = JSON.parse(ev.data);
         total += 1;
         countTotalEl.textContent = String(total);
-        const pre = document.createElement('pre');
-        pre.textContent = JSON.stringify(data, null, 2);
-        pre.className = `kind-${data.kind || 'unknown'}`;
-        eventsEl.insertBefore(pre, eventsEl.firstChild);
-        while (eventsEl.childNodes.length > 1000) {
-          eventsEl.removeChild(eventsEl.lastChild);
+
+        const tr = document.createElement('tr');
+        tr.className = `kind-${data.kind || 'unknown'}`;
+
+        const tdTs = document.createElement('td');
+        tdTs.textContent = data.ts || '';
+        const tdKind = document.createElement('td');
+        tdKind.textContent = data.kind || '';
+        const tdSource = document.createElement('td');
+        tdSource.textContent = data.source || '';
+        const tdTopic = document.createElement('td');
+        tdTopic.textContent = typeof data.topic === 'string' ? data.topic : (data.topic == null ? '' : String(data.topic));
+        const tdPayload = document.createElement('td');
+        const p = data.payload;
+        tdPayload.textContent = Array.isArray(p) ? JSON.stringify(p) : (p == null ? '' : String(p));
+
+        tr.appendChild(tdTs);
+        tr.appendChild(tdKind);
+        tr.appendChild(tdSource);
+        tr.appendChild(tdTopic);
+        tr.appendChild(tdPayload);
+
+        eventsBody.insertBefore(tr, eventsBody.firstChild);
+        while (eventsBody.childNodes.length > 1000) {
+          eventsBody.removeChild(eventsBody.lastChild);
         }
       } catch (e) {
         console.error('bad event', e);
@@ -89,7 +108,7 @@
   });
 
   clearBtn.addEventListener('click', function () {
-    eventsEl.innerHTML = '';
+    eventsBody.innerHTML = '';
   });
 
   connect();
